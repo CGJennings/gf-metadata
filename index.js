@@ -1,9 +1,10 @@
 const fs = require('fs');
 const { join } = require('path');
 
+const allFonts = [];
 const localRepo = fs.readFileSync(join(__dirname, 'local-repo-location.txt'), 'utf8').trim();
 const licenseRoots = ["apache", "ofl", "ufl"];
-const allFonts = [];
+const ignoreList = ["jsmathcmbx10", "jsmathcmex10", "jsmathcmmi10", "jsmathcmr10", "jsmathcmsy10", "jsmathcmti10"];
 
 for (const license of licenseRoots) {
     const licenseDir = join(localRepo, license);
@@ -14,6 +15,7 @@ function addFontsFromLicenseRoot(root, license) {
     const files = fs.readdirSync(root);
     files.sort();
     for (const fontDir of files) {
+        if (ignoreList.includes(fontDir)) continue;
         const fontDirAbs = join(root, fontDir);
         const stat = fs.statSync(fontDirAbs);
         if (stat.isDirectory()) {
