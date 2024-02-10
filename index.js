@@ -46,7 +46,7 @@ function listFontsIn(dir) {
 let javaProperties = "";
 for (let i=0; i<allFonts.length; i++) {
     const { path, fonts, hash } = allFonts[i];
-    javaProperties += `${path}=${fonts.join(',')},${hash}\n`;
+    javaProperties += `${path}=${fonts.join(':')}:${hash}\n`;
 }
 
 fs.writeFileSync(join(__dirname, 'metadata.properties'), javaProperties.trim());
