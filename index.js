@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { join } = require('path');
 const { createHash } = require('crypto');
+const { execSync } = require('child_process');
 
 const allFonts = [];
 const localRepo = fs.readFileSync(join(__dirname, 'local-repo-location.txt'), 'utf8').trim();
@@ -43,6 +44,12 @@ function listFontsIn(dir) {
     return [files, hash.digest('hex')];
 }
 
+try {
+    execSync('git pull', { cwd: localRepo });
+} catch (error) {
+    console.error('Failed to pull the latest changes:', error);
+}
+
 let javaProperties = "";
 for (let i=0; i<allFonts.length; i++) {
     const { path, fonts, hash } = allFonts[i];
@@ -50,3 +57,14 @@ for (let i=0; i<allFonts.length; i++) {
 }
 
 fs.writeFileSync(join(__dirname, 'metadata.properties'), javaProperties.trim());
+
+try {
+    const output = execSync('git status --porcelain metadata.properties', { cwd: __dirname });
+    if (output.toString().trim() !== '') {
+        execSync('git add metadata.properties', { cwd: __dirname });
+        execSync('git commit -m "autoupdate metadata"', { cwd: __dirname });
+        execSync('git push', { cwd: __dirname });
+    }
+} catch (error) {
+    console.error('Failed to commit and push metadata.properties:', error);
+}
