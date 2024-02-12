@@ -2,6 +2,7 @@ const fs = require('fs');
 const { join } = require('path');
 const { createHash } = require('crypto');
 const { execSync } = require('child_process');
+const zlib = require('zlib');
 
 const localRepo = fs.readFileSync(join(__dirname, 'local-repo-location.txt'), 'utf8').trim();
 const licenseRoots = ["apache", "ofl", "ufl"];
@@ -39,7 +40,7 @@ function pushChangesToRemoteMetadataRepo() {
     try {
         const output = execSync('git status --porcelain metadata.properties', { cwd: __dirname });
         if (output.toString().trim() !== '') {
-            execSync('git add metadata.properties version', { cwd: __dirname });
+            execSync('git add metadata.properties metadata.gz version', { cwd: __dirname });
             execSync('git commit -m "autoupdate metadata"', { cwd: __dirname });
             execSync('git push', { cwd: __dirname });
         }
@@ -80,6 +81,90 @@ function addFontsFromLicenseRoot(allFonts, root, license) {
     }
 }
 
+let allCats = new Set();
+let allSets = new Set();
+
+function decodePBFile(path) {
+    const pbFile = join(path, 'METADATA.pb');
+    if (!fs.existsSync(pbFile)) return null;
+
+    let name = null;
+    let cat = new Set();
+    let axes = [];
+    let sets = [];
+
+    const pb = fs.readFileSync(pbFile, 'utf8');
+    const lines = pb.split('\n');
+
+    let child;
+    let stack = [""]; // start with empty string to represent the root
+    for (let line of lines) {
+        const within = stack[stack.length - 1];
+        const depth = stack.length - 1;
+        line = line.trim();
+        if (line.length === 0) continue;
+
+        if (line === "}") {
+            switch (stack.pop()) {
+                case "axes": {
+                    if (child.tag != null && child.min_value != null && child.max_value != null) {
+                        axes.push(`${child.tag},${child.min_value},${child.max_value}`);
+                    }
+                }
+                default: {
+                }
+            }
+            child = null;
+            continue;
+        }
+
+        if (line.endsWith("{")) {
+            stack.push(line.substring(0, line.length - 1).trim());
+            child = {};    
+            continue;
+        }
+
+        let [key, value] = line.split(':').map(s => s.trim());
+        if (!value) {
+            console.warn("skipping empty key " + key);
+            continue;
+        }
+        if (value.startsWith('"') && value.endsWith('"')) {
+            value = value.substring(1, value.length - 1);
+        }
+
+        switch (within) {
+            case "": {
+                switch (key) {
+                    case "name": name = value; break;
+                    case "category": cat.add(value); allCats.add(value); break;
+                    case "subsets": sets.push(value); allSets.add(value); break;
+                    case "classifications": cat.add(value); allCats.add(value); break;
+                }
+                break;
+            }
+            case "axes": {
+                switch (key) {
+                    case "tag": child.tag = value; break;
+                    case "min_value": child.min_value = value; break;
+                    case "max_value": child.max_value = value; break;
+                }
+                break;
+            }
+            default: {
+                continue;
+            }
+        }
+    }
+
+    let output = "";
+    if (name == null) return null;
+    output = `name=${name}`;
+    if (cat.size> 0) output += `\ncats=${Array.from(cat).sort().join(',')}`;
+    if (sets.length > 0) output += `\nsets=${sets.join(',')}`;
+    if (axes.length > 0) output += `\naxes=${axes.join('|')}`;
+}
+
 pullChangesToLocalFontRepo();
 
 const allFonts = [];
@@ -90,7 +175,9 @@ for (const license of licenseRoots) {
 let javaProperties = "";
 for (let i=0; i<allFonts.length; i++) {
     const { path, fonts, hash } = allFonts[i];
-    javaProperties += `${path}=${fonts.join(':')}:${hash}\n`;
+    let meta = decodePBFile(join(localRepo, path));
+    if (meta == null) continue;
+    javaProperties += `path=${path}\nlist=${fonts.join(':')}\n${meta}\nhash=${hash}\n`;
 }
 javaProperties = javaProperties.trim();
 
@@ -101,9 +188,15 @@ $version=${versionCode}
 `.trim();
 
 // add comments/metadata to top of properties
-fs.writeFileSync(join(__dirname, 'metadata.properties'), header + '\n' + javaProperties);
+const metadataFile = join(__dirname, 'metadata.properties');
+const gzFile = join(__dirname, 'metadata.gz');
+fs.writeFileSync(metadataFile, header + '\n' + javaProperties);
+fs.createReadStream(metadataFile).pipe(zlib.createGzip()).pipe(fs.createWriteStream(gzFile));
 
 // for version, use a hash of the file text, thus it only changes if the fonts or header changes
 fs.writeFileSync(join(__dirname, 'version'), versionCode);
 
 pushChangesToRemoteMetadataRepo();
+
+console.log(`Categories: ${Array.from(allCats).sort().join(', ')}`);
+console.log(`Subsets: ${Array.from(allSets).sort().join(', ')}`);
