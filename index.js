@@ -163,6 +163,7 @@ function decodePBFile(path) {
     if (cat.size> 0) output += `\ncats=${Array.from(cat).sort().join(',')}`;
     if (sets.length > 0) output += `\nsets=${sets.join(',')}`;
     if (axes.length > 0) output += `\naxes=${axes.join('|')}`;
+    return output;
 }
 
 pullChangesToLocalFontRepo();
@@ -177,7 +178,7 @@ for (let i=0; i<allFonts.length; i++) {
     const { path, fonts, hash } = allFonts[i];
     let meta = decodePBFile(join(localRepo, path));
     if (meta == null) continue;
-    javaProperties += `path=${path}\nlist=${fonts.join(':')}\n${meta}\nhash=${hash}\n`;
+    javaProperties += `path=${path}\nlist=${fonts.join(',')}\n${meta}\nhash=${hash}\n`;
 }
 javaProperties = javaProperties.trim();
 
