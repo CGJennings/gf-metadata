@@ -192,12 +192,9 @@ $version=${versionCode}
 const metadataFile = join(__dirname, 'metadata.properties');
 const gzFile = join(__dirname, 'metadata.gz');
 fs.writeFileSync(metadataFile, header + '\n' + javaProperties);
-fs.createReadStream(metadataFile).pipe(zlib.createGzip()).pipe(fs.createWriteStream(gzFile));
-
-// for version, use a hash of the file text, thus it only changes if the fonts or header changes
 fs.writeFileSync(join(__dirname, 'version'), versionCode);
-
-pushChangesToRemoteMetadataRepo();
+fs.createReadStream(metadataFile).pipe(zlib.createGzip()).pipe(fs.createWriteStream(gzFile))
+    .on('finish', pushChangesToRemoteMetadataRepo);
 
 console.log(`Categories: ${Array.from(allCats).sort().join(', ')}`);
 console.log(`Subsets: ${Array.from(allSets).sort().join(', ')}`);
