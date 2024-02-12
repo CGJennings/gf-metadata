@@ -38,12 +38,9 @@ function pullChangesToLocalFontRepo() {
 
 function pushChangesToRemoteMetadataRepo() {
     try {
-        const output = execSync('git status --porcelain metadata.properties', { cwd: __dirname });
-        if (output.toString().trim() !== '') {
-            execSync('git add metadata.properties metadata.gz version', { cwd: __dirname });
-            execSync('git commit -m "autoupdate metadata"', { cwd: __dirname });
-            execSync('git push', { cwd: __dirname });
-        }
+        execSync('git add *', { cwd: __dirname });
+        execSync('git commit -m "autoupdate metadata"', { cwd: __dirname });
+        execSync('git push', { cwd: __dirname });
     } catch (error) {
         console.error('Failed to commit and push metadata.properties:', error);
     }
