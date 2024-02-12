@@ -126,7 +126,10 @@ function decodePBFile(path) {
 
         let [key, value] = line.split(':').map(s => s.trim());
         if (!value) {
-            console.warn("skipping empty key " + key);
+            // empty key is generally a comment
+            if (!key.isEmpty() && !key.startsWith('#')) {
+                console.warn("skipping empty key " + key);
+            }
             continue;
         }
         if (value.startsWith('"') && value.endsWith('"')) {
@@ -138,7 +141,7 @@ function decodePBFile(path) {
                 switch (key) {
                     case "name": name = value; break;
                     case "category": cat.add(value); allCats.add(value); break;
-                    case "subsets": sets.push(value); allSets.add(value); break;
+                    case "subsets": if (value !== "menu") { sets.push(value); allSets.add(value); } break;
                     case "classifications": cat.add(value); allCats.add(value); break;
                 }
                 break;
