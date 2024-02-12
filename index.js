@@ -127,7 +127,7 @@ function decodePBFile(path) {
         let [key, value] = line.split(':').map(s => s.trim());
         if (!value) {
             // empty key is generally a comment
-            if (!key.isEmpty() && !key.startsWith('#')) {
+            if (key.length !== 0 && !key.startsWith('#')) {
                 console.warn("skipping empty key " + key);
             }
             continue;
@@ -181,7 +181,7 @@ for (let i=0; i<allFonts.length; i++) {
     const { path, fonts, hash } = allFonts[i];
     let meta = decodePBFile(join(localRepo, path));
     if (meta == null) continue;
-    javaProperties += `path=${path}\nlist=${fonts.join(',')}\n${meta}\nhash=${hash}\n`;
+    javaProperties += `path=${path}\nlist=${fonts.join('|')}\n${meta}\nhash=${hash}\n`;
 }
 javaProperties = javaProperties.trim();
 
