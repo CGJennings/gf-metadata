@@ -30,6 +30,7 @@ function versionTagFromDigest(hashToDigest) {
 
 function pullChangesToLocalFontRepo() {
     try {
+        console.log("pulling changes...")
         execSync('git pull', { cwd: localRepo });
     } catch (error) {
         console.error('Failed to pull the latest changes:', error);
@@ -38,6 +39,7 @@ function pullChangesToLocalFontRepo() {
 
 function pushChangesToRemoteMetadataRepo() {
     try {
+        console.log("pushing changes...")
         execSync('git add *', { cwd: __dirname });
         execSync('git commit -m "autoupdate metadata"', { cwd: __dirname });
         execSync('git push', { cwd: __dirname });
@@ -194,7 +196,7 @@ const gzFile = join(__dirname, 'metadata.gz');
 fs.writeFileSync(metadataFile, header + '\n' + javaProperties);
 fs.writeFileSync(join(__dirname, 'version'), versionCode);
 fs.createReadStream(metadataFile).pipe(zlib.createGzip()).pipe(fs.createWriteStream(gzFile))
-    .on('finish', pushChangesToRemoteMetadataRepo);
+    .on('close', pushChangesToRemoteMetadataRepo);
 
 console.log(`Categories: ${Array.from(allCats).sort().join(', ')}`);
 console.log(`Subsets: ${Array.from(allSets).sort().join(', ')}`);
