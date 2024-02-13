@@ -10,8 +10,8 @@ const ignoreList = [
     "jsmathcmbx10", "jsmathcmex10", "jsmathcmmi10", "jsmathcmr10", "jsmathcmsy10", "jsmathcmti10",
     // colour fonts --- there seems to be no metadata in the .pb files to easily detect this,
     // at least not at this time
-    "notocoloremoji", "blakaink", "reemkufiink", "reemkufifun", "nabla", "arefruqaaink",
-    "bungeespice", "foldit", "amiriquran", "cairoplay", "honk",
+    "notocoloremoji", "notocoloremojicompattest", "blakaink", "reemkufiink", "reemkufifun",
+    "nabla", "arefruqaaink", "bungeespice", "foldit", "amiriquran", "cairoplay", "honk",
 ];
 
 /**
