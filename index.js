@@ -88,6 +88,7 @@ function decodePBFile(path) {
     if (!fs.existsSync(pbFile)) return null;
 
     let name = null;
+    let designer = null;
     let cat = new Set();
     let axes = [];
     let sets = [];
@@ -139,6 +140,7 @@ function decodePBFile(path) {
             case "": {
                 switch (key) {
                     case "name": name = value; break;
+                    case "designer": designer = value; break;
                     case "category": cat.add(value); allCats.add(value); break;
                     case "subsets": if (value !== "menu") { sets.push(value); allSets.add(value); } break;
                     case "classifications": cat.add(value); allCats.add(value); break;
@@ -162,6 +164,7 @@ function decodePBFile(path) {
     let output = "";
     if (name == null) return null;
     output = `name=${name}`;
+    if (designer != null && designer.trim().length > 0) output += `\ndsnr=${designer.trim()}`;
     if (cat.size> 0) output += `\ncats=${Array.from(cat).sort().join(',')}`;
     if (sets.length > 0) output += `\nsets=${sets.join(',')}`;
     if (axes.length > 0) output += `\naxes=${axes.join('|')}`;
