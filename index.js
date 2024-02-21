@@ -196,8 +196,8 @@ $version=${versionCode}
 // add comments/metadata to top of properties
 const metadataFile = join(__dirname, 'metadata.properties');
 const gzFile = join(__dirname, 'metadata.gz');
-fs.writeFileSync(metadataFile, header + '\n' + javaProperties);
-fs.writeFileSync(join(__dirname, 'version'), versionCode);
+fs.writeFileSync(metadataFile, header + '\n' + javaProperties, 'utf8');
+fs.writeFileSync(join(__dirname, 'version'), versionCode, 'utf8');
 fs.createReadStream(metadataFile).pipe(zlib.createGzip()).pipe(fs.createWriteStream(gzFile))
     .on('close', pushChangesToRemoteMetadataRepo);
 
