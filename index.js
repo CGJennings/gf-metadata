@@ -37,10 +37,22 @@ function pullChangesToLocalFontRepo() {
     }    
 }
 
+function checkForLocalChanges() {
+    try {
+        console.log("checking for changes to commit...");
+        const status = execSync('git status --porcelain', { cwd: __dirname }).toString();
+        return status.trim().length > 0;
+    } catch (error) {
+        console.error('Failed to check for local changes:', error);
+        return false;
+    }
+}
+
 function pushChangesToRemoteMetadataRepo() {
     try {
         console.log("pushing changes...")
         execSync('git add *', { cwd: __dirname });
+        if (!checkForLocalChanges()) return;
         execSync('git commit -m "autoupdate metadata"', { cwd: __dirname });
         execSync('git push', { cwd: __dirname });
     } catch (error) {
